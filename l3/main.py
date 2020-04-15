@@ -171,6 +171,26 @@ class Encoding:
         return ''.join(self.lzw_decode(list(self.number_encoder.decode(bits))))
 
 
+def write_bits(bits, file):
+    padding = (8 - ((len(bits) + 3) % 8)) % 8
+    output = bin(padding)[2:].zfill(3) + bits + padding*'0'
+    bytes_arr = bytes(int(output[i:i+8], 2) for i in range(0, len(output), 8))
+
+    with open(file, 'wb') as f:
+        f.write(bytes_arr)
+
+
+def read_bits(file):
+    with open(file, 'rb') as f:
+        bits = ''.join(bin(byte)[2:].zfill(8) for byte in f.read())
+    padding_len = int(bits[:3], 2)
+
+    if padding_len == 0:
+        return bits[3:]
+    else:
+        return bits[3:-padding_len]
+
+
 def get_arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--encoding', dest='encoding',
@@ -203,11 +223,13 @@ def main():
             text = f.read()
         result = encoding.encode(text)
 
-        with open(args.outfile, 'w') as f:
-            f.write(result)
+        # with open(args.outfile, 'w') as f:
+        #     f.write(result)
+        write_bits(result, args.outfile)
     else:
-        with open(args.infile, 'r') as f:
-            bits = f.read()
+        # with open(args.infile, 'r') as f:
+        #     bits = f.read()
+        bits = read_bits(args.infile)
         result = encoding.decode(bits)
 
         with open(args.outfile, 'w') as f:
