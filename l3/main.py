@@ -69,6 +69,55 @@ class EliasOmega:
             bits = bits[1:]
 
 
+class Fibonacci:
+    def __init__(self):
+        self._sequence = [0, 1]
+        self._prev_max = 1
+
+    def _get_sequence(self, max_num):
+        if max_num > self._prev_max:
+            while self._sequence[-1] + self._sequence[-2] <= max_num:
+                self._sequence.append(self._sequence[-1] + self._sequence[-2])
+
+            self._prev_max = max_num
+
+            return self._sequence.copy()
+        else:
+            return [num for num in self._sequence if num <= max_num]
+
+    def encode(self, num):
+        sequence = self._get_sequence(num)
+        result = '1'
+
+        while num != 0:
+            num -= sequence[-1]
+            result = '1' + result
+            sequence.pop()
+            while sequence[-1] > num:
+                result = '0' + result
+                sequence.pop()
+
+        return result[1:]
+
+    def decode(self, bits):
+        cur_num = 0
+        prev_bit = ''
+        cur_fib = 1
+        prev_fib = 1
+
+        for bit in bits:
+            if bit == prev_bit and prev_bit == '1':
+                yield cur_num
+                cur_num = 0
+                prev_bit = ''
+                cur_fib = 1
+                prev_fib = 1
+            else:
+                cur_num += int(bit) * cur_fib
+                prev_fib, cur_fib = cur_fib, cur_fib + prev_fib
+                prev_bit = bit
+
+
 class Encoding:
     def __init__(self, number_encoder):
         self.number_encoder = number_encoder
@@ -115,10 +164,8 @@ class Encoding:
             old = code
 
     def encode(self, string):
-        bits = ''.join(self.number_encoder.encode(num)
+        return ''.join(self.number_encoder.encode(num)
                        for num in self.lzw_encode(string))
-
-        return ''.join(bits)
 
     def decode(self, bits):
         return ''.join(self.lzw_decode(list(self.number_encoder.decode(bits))))
@@ -140,7 +187,9 @@ def get_arg_parser():
 def main():
     args = get_arg_parser().parse_args()
 
-    if args.encoding == 'gamma':
+    if args.encoding == 'fibonacci':
+        number_encoder = Fibonacci()
+    elif args.encoding == 'gamma':
         number_encoder = EliasGamma()
     elif args.encoding == 'delta':
         number_encoder = EliasDelta()
