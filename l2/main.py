@@ -154,24 +154,48 @@ def entropy(string):
 
     return log(char_count, 2) - (result / char_count)
 
+def write_bits(bits, file):
+    padding = (8 - ((len(bits) + 3) % 8)) % 8
+    output = bin(padding)[2:].zfill(3) + bits + padding*'0'
+    bytes_arr = bytes(int(output[i:i+8], 2) for i in range(0, len(output), 8))
+
+    with open(file, 'wb') as f:
+        f.write(bytes_arr)
+
+
+def read_bits(file):
+    with open(file, 'rb') as f:
+        bits = ''.join(bin(byte)[2:].zfill(8) for byte in f.read())
+    padding_len = int(bits[:3], 2)
+
+    if padding_len == 0:
+        return bits[3:]
+    else:
+        return bits[3:-padding_len]
+
 
 def main():
     args = get_arg_parser().parse_args()
 
-    with open(args.input_file) as f:
-        text = f.read()
-
 
     if args.encode:
+        with open(args.input_file) as f:
+            text = f.read()
+
         result = AdaptiveHuffman().encode(text)
+
         print('Entropy:', entropy(text))
         print('Average length:', len(result) / len(text))
         print('Compression ratio:', len(text) * 8 / len(result))
+
+        write_bits(result, args.output_file)
     else:
+        text = read_bits(args.input_file)
+        print(text)
         result = AdaptiveHuffman().decode(text)
 
-    with open(args.output_file, 'w') as f:
-        f.write(result)
+        with open(args.output_file, 'w') as f:
+            f.write(result)
 
 
 if __name__ == "__main__":
