@@ -102,6 +102,13 @@ def jpeg_ls(bitmap, prediction_scheme):
 
     return result
 
+def new_standard(n, w, nw):
+    if nw >= max(w, n):
+        return min(w, n)
+    elif nw <= min(w, n):
+        return max(w, n)
+    else:
+        return w+n-nw
 
 prediction_schemes = [
     lambda n, w, nw: w,
@@ -110,18 +117,10 @@ prediction_schemes = [
     lambda n, w, nw: n+w-nw,
     lambda n, w, nw: n+(w-nw)//2,
     lambda n, w, nw: w+(n-nw)//2,
-    lambda n, w, nw: ((n+w) % 256)//2,
-    lambda n, w, nw: max(w, n) if nw >= max(
-        w, n) else min(w, n) if nw <= min(w, n) else w+n-nw
+    lambda n, w, nw: (n+w)//2,
+    lambda n, w, nw: Pixel(red=new_standard(n.red, w.red, nw.red), green=new_standard(n.green, w.green, nw.green), blue=new_standard(n.blue, w.blue, nw.blue))
 ]
 
-
-def print_entropies(bitmap):
-    print(f"General: {entropy(bitmap, '')}")
-    print(f"Red: {entropy(bitmap, 'red')}")
-    print(f"Green: {entropy(bitmap, 'green')}")
-    print(f"Blue: {entropy(bitmap, 'blue')}")
-    print('---')
 
 
 def main():
@@ -136,12 +135,51 @@ def main():
     bitmap = parse_bitmap(image[18:-26], width, height)
 
     print('Image entropy')
-    print_entropies(bitmap)
+    print(f"General: {entropy(bitmap, '')}")
+    print(f"Red: {entropy(bitmap, 'red')}")
+    print(f"Green: {entropy(bitmap, 'green')}")
+    print(f"Blue: {entropy(bitmap, 'blue')}")
+    print('---')
+    
+    best_general = 100 
+    best_red = 100
+    best_green = 100
+    best_blue = 100
 
     for i, scheme in enumerate(prediction_schemes, 1):
         encoded = jpeg_ls(bitmap, scheme)
         print(f"Scheme {i}")
-        print_entropies(encoded)
+        general = entropy(encoded, '')
+        print(f"General: {general}")
+        red = entropy(encoded, 'red')
+        print(f"Red: {red}")
+        green = entropy(encoded, 'green')
+        print(f"Green: {green}")
+        blue = entropy(encoded, 'blue')
+        print(f"Blue: {blue}")
+        print('---')
+
+        if general < best_general:
+            best_general = general
+            best_general_no = i
+
+        if red < best_red:
+            best_red = red
+            best_red_no = i
+
+        if green < best_green:
+            best_green = green
+            best_green_no = i
+
+        if blue < best_blue:
+            best_blue = blue
+            best_blue_no = i
+
+
+    print(f'Best general: {best_general_no}')
+    print(f'Best red: {best_red_no}')
+    print(f'Best green: {best_green_no}')
+    print(f'Best blue: {best_blue_no}')
 
 
 if __name__ == "__main__":
