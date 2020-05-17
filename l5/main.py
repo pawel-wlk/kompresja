@@ -124,8 +124,7 @@ def bitmap_to_bytes(bitmap):
 
 def mse(original, new):
     return (1 / len(original)) * sum(
-        [euclid_squared(original[i], new[i]) **
-         2 for i in range(len(original))]
+        euclid_squared(original[i], new[i]) for i in range(len(original))
     )
 
 
@@ -134,7 +133,7 @@ def snr(x, mserr):
 
 
 def main():
-    if len(argv) !=4 :
+    if len(argv) != 4:
         print("main.py [input image] [output image] [color number exponent]")
         return
 
@@ -158,11 +157,10 @@ def main():
     snratio = snr(original_bitmap, mserr)
 
     print("MSE:", mserr)
-    print("SNR:", snratio)
+    print("SNR:", 10 * log(snratio, 10), "dB")
 
     with open(argv[2], "wb") as f:
         f.write(header + payload + footer)
-
 
 
 if __name__ == "__main__":
